@@ -4,89 +4,82 @@ import math
 # Student Number = s4015983; Message will be 4015983
 message = 4015983
 
+print("Message to be decrypted: ", message)
+
 #prime number generator
 def prime():
 
-    isPrime = True
-
-    num = random.randint(2, 1000)
-
-    while not isPrime:
+    while True:
+        num = random.randint(2, 1000)
             
-        if num == 2:
-            print("ketemu anjing")
-            break
-
-
-        for i in range(3, int(math.sqrt(num)) + 1,2):
+        for i in range(2, int(math.sqrt(num)) + 1):
             if num % i == 0:
-                num = num + 1
-                print("not prime")
-                continue
+                break
          
         else:
-            isPrime = True
-            break
-    
-    return num
+            return num
 
 #using prime function to generate prime number
 P = prime()
 Q = prime()
 
-# generating prime number p and q
+# generating random prime number p and q
 same = True 
-while not same:
+while same:
 
     # Checking if P and Q are the same
     # P and Q cannot be the same because it breaks the algorithm's security
     if P == Q:
         Q = prime()
     else:
-        same = True
+        same = False
         
-print({P})
-print({Q})
+print("Public Key P: ", P)
+print("Publice Key Q: ", Q)
 
-# calculating n : p * q
+# calculating public key N n : p * q
 
 N = P * Q
+
+print("Public Key N: ", N)
 
 # calculating totient
 TOTIENT = (P - 1) * (Q - 1)
 
+print("TOTIENT: ", TOTIENT)
+
 # picking prime number e
-# gcd of e and totient =1
+# gcd of e and totient = 1 where e is 1<e<totient
 
-def primeE(int):
+def coprimeE(int):
 
-    isPrime = True
+    while True:
+        num = random.randint(1, TOTIENT)
 
-    num = random.randint(1, TOTIENT)
+        if math.gcd(num, TOTIENT) == 1:
+            return num
 
-    while not isPrime:
-    
+E = coprimeE(TOTIENT)
 
-        for i in range(3, int(math.sqrt(num)) + 1,2):
-            if num % i == 0:
-                num = num + 1
-                print("not prime")
-                continue
-         
-        else:
-            isPrime = True
-            break
-    
-    return num
+print("random prime: ", E)
 
-E = primeE(TOTIENT)
+# private key generator D using inverse mod modulo
 
-print({E})
+D = pow(E, -1, TOTIENT)
 
-# totient should not be divisible by e
-# private key generator
+print("inverse: ", D)
+
 # Encrption
+
+enc = pow(message, E) % N
+
+print("encrypted message ", enc)
+
 # decryption
+
+dec =  pow(enc, D) % N
+print("decrypted message: ", dec)
+
 
 
 
