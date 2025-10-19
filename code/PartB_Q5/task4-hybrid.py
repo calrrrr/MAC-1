@@ -51,7 +51,8 @@ def hybrid_enc(input_file_path, public_key, enc_file_path, enc_key_path):
     print("")
     print("Encrypted AES Key:", enc_aes_key.hex())
     print("")
-    print("Ciphertext Location : output")
+    print("Ciphertext made in output folder")
+    print("")
 
 # hybrid decryption
 def hybrid_dec(enc_file_path, enc_key_path, private_key, dec_file_path):
@@ -83,7 +84,8 @@ def hybrid_dec(enc_file_path, enc_key_path, private_key, dec_file_path):
     with open(dec_file_path, "wb") as f:
         f.write(plaintext)
 
-    print("Decrypted text written to:", dec_file_path)
+    print("Decrypted text in output folder")
+    print("")
 
 def main():
     private_key, public_key = gen_keys()
@@ -96,7 +98,7 @@ def main():
     hybrid_enc(input_file_path, public_key, enc_file_path, enc_key_path)
     hybrid_dec(enc_file_path, enc_key_path, private_key, dec_file_path)
 
-    print("All operations completed.")
+    print("Changes made in Output Directory!")
 
 if __name__ == "__main__":
     main()
