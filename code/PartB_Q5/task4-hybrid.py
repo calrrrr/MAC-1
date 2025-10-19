@@ -1,5 +1,6 @@
 import os
 from cryptography.hazmat.primitives.asymmetric import rsa, padding as rsa_padding
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives import padding as sym_padding
@@ -9,12 +10,40 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 # generate rsa keys
 def gen_keys():
 
-    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    public_key = private_key.public_key()
-    return private_key, public_key
+    priv_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    pub_key = priv_key.public_key()
+
+    # format keys to display to user
+    pub_pem = pub_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+
+    priv_pem = priv_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    )
+
+    print("RSA Public Key:")
+    print(pub_pem.decode())
+    print("")
+    print("RSA Private Key:")
+    print(priv_pem.decode())
+    print("")
+
+    # saving rsa keys as seperate files
+    output_dir = os.path.join(BASE, "output")
+    os.makedirs(output_dir, exist_ok=True)
+    with open(os.path.join(output_dir, "rsa_pub_key.pem"), "wb") as f:
+        f.write(pub_pem)
+    with open(os.path.join(output_dir, "rsa_priv_key.pem"), "wb") as f:
+        f.write(priv_pem)
+    
+    return priv_key, pub_key
 
 # hybrid encryption
-def hybrid_enc(input_file_path, public_key, enc_file_path, enc_key_path):
+def hybrid_enc(input_file_path, pub_key, enc_file_path, enc_key_path):
 
     # read task2.txt file
     with open(input_file_path, "rb") as f:
@@ -32,7 +61,7 @@ def hybrid_enc(input_file_path, public_key, enc_file_path, enc_key_path):
     ciphertext = encryptor.update(padded) + encryptor.finalize()
 
     # encrypt aes key using rsa
-    enc_aes_key = public_key.encrypt(
+    enc_aes_key = pub_key.encrypt(
         aes_key,
         rsa_padding.OAEP(
             mgf=rsa_padding.MGF1(algorithm=hashes.SHA256()),
@@ -46,10 +75,13 @@ def hybrid_enc(input_file_path, public_key, enc_file_path, enc_key_path):
         f.write(enc_aes_key)
     with open(enc_file_path, "wb") as f:
         f.write(iv + ciphertext)
+     # saving aes key to file
+    with open(os.path.join(BASE, "output", "aes_key.bin"), "wb") as f:
+        f.write(aes_key)
 
-    print("AES Key:", aes_key.hex())
+    print("AES Key (before encryption):", aes_key.hex())
     print("")
-    print("Encrypted AES Key:", enc_aes_key.hex())
+    print("AES Key (after encryption):", enc_aes_key.hex())
     print("")
     print("Ciphertext made in output folder")
     print("")
@@ -74,6 +106,10 @@ def hybrid_dec(enc_file_path, enc_key_path, private_key, dec_file_path):
         )
     )
 
+    # decrypt aes result to file
+    with open(os.path.join(BASE, "output", "aes_key_dec.bin"), "wb") as f:
+        f.write(aes_key)
+
     # aes decryption
     cipher = Cipher(algorithms.AES(aes_key), modes.CBC(iv))
     decryptor = cipher.decryptor()
@@ -84,19 +120,21 @@ def hybrid_dec(enc_file_path, enc_key_path, private_key, dec_file_path):
     with open(dec_file_path, "wb") as f:
         f.write(plaintext)
 
+    print("Decrypted AES key in output folder")
+    print("")
     print("Decrypted text in output folder")
     print("")
 
 def main():
-    private_key, public_key = gen_keys()
+    priv_key, pub_key = gen_keys()
 
     input_file_path = os.path.join(BASE, "input", "task2.txt")
     enc_file_path = os.path.join(BASE, "output", "task2_enc")
     dec_file_path = os.path.join(BASE, "output", "task2_dec")
     enc_key_path = os.path.join(BASE, "output", "enc_aes_key.bin")
 
-    hybrid_enc(input_file_path, public_key, enc_file_path, enc_key_path)
-    hybrid_dec(enc_file_path, enc_key_path, private_key, dec_file_path)
+    hybrid_enc(input_file_path, pub_key, enc_file_path, enc_key_path)
+    hybrid_dec(enc_file_path, enc_key_path, priv_key, dec_file_path)
 
     print("Changes made in Output Directory!")
 
